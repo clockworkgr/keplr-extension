@@ -28,7 +28,33 @@ export class EnableAccessMsg extends Message<void> {
     return EnableAccessMsg.type();
   }
 }
+export class EnableMultipleAccessMsg extends Message<void> {
+  public static type() {
+    return "enable-multiple-access";
+  }
 
+  constructor(public readonly chainIds: string[]) {
+    super();
+  }
+
+  validateBasic(): void {
+    if (!this.chainIds) {
+      throw new Error("chain ids not set");
+    }
+  }
+
+  route(): string {
+    return ROUTE;
+  }
+
+  approveExternal(): boolean {
+    return true;
+  }
+
+  type(): string {
+    return EnableMultipleAccessMsg.type();
+  }
+}
 export class GetPermissionOriginsMsg extends Message<string[]> {
   public static type() {
     return "get-permission-origins";

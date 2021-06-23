@@ -1,4 +1,5 @@
 export const INTERACTION_TYPE_PERMISSION = "permission";
+export const INTERACTION_TYPE_MULTI_PERMISSION = "multi-permission";
 
 export function getBasicAccessPermissionType() {
   return "basic-access";
@@ -10,6 +11,11 @@ export function isBasicAccessPermissionType(type: string) {
 
 export interface PermissionData {
   chainId: string;
+  type: string;
+  origins: string[];
+}
+export interface MultiplePermissionData {
+  chainIds: string[];
   type: string;
   origins: string[];
 }

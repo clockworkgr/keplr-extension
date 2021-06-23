@@ -1,5 +1,6 @@
 import {
   EnableAccessMsg,
+  EnableMultipleAccessMsg,
   GetPermissionOriginsMsg,
   RemovePermissionOrigin,
 } from "./messages";
@@ -13,6 +14,11 @@ export const getHandler: (service: PermissionService) => Handler = (
     switch (msg.constructor) {
       case EnableAccessMsg:
         return handleEnableAccessMsg(service)(env, msg as EnableAccessMsg);
+      case EnableMultipleAccessMsg:
+        return handleEnableMultipleAccessMsg(service)(
+          env,
+          msg as EnableMultipleAccessMsg
+        );
       case GetPermissionOriginsMsg:
         return handleGetPermissionOriginsMsg(service)(
           env,
@@ -41,6 +47,17 @@ const handleEnableAccessMsg: (
   };
 };
 
+const handleEnableMultipleAccessMsg: (
+  service: PermissionService
+) => InternalHandler<EnableMultipleAccessMsg> = (service) => {
+  return async (env, msg) => {
+    return await service.checkOrGrantMultipleAccessPermission(
+      env,
+      msg.chainIds,
+      msg.origin
+    );
+  };
+};
 const handleGetPermissionOriginsMsg: (
   service: PermissionService
 ) => InternalHandler<GetPermissionOriginsMsg> = (service) => {

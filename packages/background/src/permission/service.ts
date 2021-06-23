@@ -6,7 +6,9 @@ import { Env } from "@keplr-wallet/router";
 import {
   getBasicAccessPermissionType,
   INTERACTION_TYPE_PERMISSION,
+  INTERACTION_TYPE_MULTI_PERMISSION,
   PermissionData,
+  MultiplePermissionData,
 } from "./types";
 import { KVStore } from "@keplr-wallet/common";
 import { ChainsService } from "../chains";
@@ -69,6 +71,26 @@ export class PermissionService {
     await this.checkBasicAccessPermission(env, chainId, origin);
   }
 
+  async checkOrGrantMultipleAccessPermission(
+    env: Env,
+    chainIds: string[],
+    origin: string
+  ) {
+    // Try to unlock the key ring before checking or granting the basic permission.
+    await this.keyRingService.enable(env);
+    const chainsToPermit: string[] = [];
+    for (const chainId of chainIds) {
+      if (!this.hasPermisson(chainId, getBasicAccessPermissionType(), origin)) {
+        chainsToPermit.push(chainId);
+      }
+    }
+    if (chainsToPermit.length > 0) {
+      await this.grantMultipleAccessPermission(env, chainsToPermit, [origin]);
+    }
+    for (const chainId of chainIds) {
+      await this.checkBasicAccessPermission(env, chainId, origin);
+    }
+  }
   async grantPermission(
     env: Env,
     url: string,
@@ -96,6 +118,33 @@ export class PermissionService {
     await this.addPermission(chainId, type, origins);
   }
 
+  async grantMultiplePermission(
+    env: Env,
+    url: string,
+    chainIds: string[],
+    type: string,
+    origins: string[]
+  ) {
+    if (env.isInternalMsg) {
+      return;
+    }
+
+    const permissionData: MultiplePermissionData = {
+      chainIds,
+      type,
+      origins,
+    };
+
+    await this.interactionService.waitApprove(
+      env,
+      url,
+      INTERACTION_TYPE_MULTI_PERMISSION,
+      permissionData
+    );
+    for (const chainId of chainIds) {
+      await this.addPermission(chainId, type, origins);
+    }
+  }
   async grantBasicAccessPermission(
     env: Env,
     chainId: string,
@@ -113,6 +162,24 @@ export class PermissionService {
     );
   }
 
+  async grantMultipleAccessPermission(
+    env: Env,
+    chainIds: string[],
+    origins: string[]
+  ) {
+    // Make sure that the chain info is registered.
+    for (const chainId of chainIds) {
+      await this.chainsService.getChainInfo(chainId);
+    }
+
+    await this.grantMultiplePermission(
+      env,
+      "/access",
+      chainIds,
+      getBasicAccessPermissionType(),
+      origins
+    );
+  }
   checkPermission(env: Env, chainId: string, type: string, origin: string) {
     if (env.isInternalMsg) {
       return;

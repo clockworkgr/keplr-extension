@@ -9,6 +9,7 @@ import {
 } from "@cosmjs/launchpad";
 import {
   EnableAccessMsg,
+  EnableMultipleAccessMsg,
   SuggestChainInfoMsg,
   GetKeyMsg,
   SuggestTokenMsg,
@@ -43,6 +44,12 @@ export class Keplr implements IKeplr {
     );
   }
 
+  async enableMultiple(chainIds: string[]): Promise<void> {
+    await this.requester.sendMessage(
+      BACKGROUND_PORT,
+      new EnableMultipleAccessMsg(chainIds)
+    );
+  }
   async experimentalSuggestChain(chainInfo: ChainInfo): Promise<void> {
     const msg = new SuggestChainInfoMsg(chainInfo);
     await this.requester.sendMessage(BACKGROUND_PORT, msg);
